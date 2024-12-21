@@ -1,5 +1,10 @@
 import os  # Required for file and directory operations
-import tensorflow as tf  # Required for TensorFlow functions
+import keras
+import tensorflow as tf
+import numpy as np
+from tensorflow import data as tf_data
+from tensorflow import image as tf_image
+from tensorflow import io as tf_io
 
 
 def load_img_and_mask(input_img_path, target_img_path, img_size):
@@ -7,7 +12,8 @@ def load_img_and_mask(input_img_path, target_img_path, img_size):
         # Load and preprocess the input image
         input_img = tf.io.read_file(input_img_path)
         # Change to decode_jpeg for better JPEG handling
-        input_img = tf.io.decode_jpeg(input_img, channels=3)
+        # input_img = tf.io.decode_jpeg(input_img, channels=3)
+        input_img = tf_io.decode_png(input_img, channels=3)
         input_img = tf.image.resize(input_img, img_size)
         input_img = tf.image.convert_image_dtype(input_img, tf.float32)
 
@@ -53,7 +59,7 @@ def prepare_datasets(input_dir, target_dir, img_size, batch_size, val_samples=10
     val_input_img_paths = input_img_paths[-val_samples:]
     val_target_img_paths = filtered_target_img_paths[-val_samples:]
 
-    # Create TensorFlow datasets
+    # Create TensorFlow datasets - does this + one above do the same as "max dataset lenghts" - keras har ju gjort så att den bara gör ett dataset på 1000.
     def create_dataset(input_img_paths, target_img_paths):
         dataset = tf.data.Dataset.from_tensor_slices(
             (input_img_paths, target_img_paths))
