@@ -1,5 +1,6 @@
 import os
 import tensorflow as tf
+import tensorflow_addons as tfa  # Added import for tensorflow_addons
 
 
 def load_img_and_mask(input_img_path, target_img_path, img_size):
