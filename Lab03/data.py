@@ -49,6 +49,7 @@ def augment_data(input_img, target_img):
 
 
 def get_dataset(batch_size, img_size, input_img_paths, target_img_paths, max_dataset_len=None, augment=False):
+    print(f"get_dataset called with augment={augment}")
     """
     Create a TensorFlow dataset for the given input and target image paths.
     Optionally apply augmentation if augment=True.
