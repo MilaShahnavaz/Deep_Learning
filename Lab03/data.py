@@ -24,25 +24,54 @@ def load_img_and_mask(input_img_path, target_img_path, img_size):
     except Exception as e:
         print(f"Error processing {input_img_path} or {target_img_path}: {e}")
         return None, None
+    import tensorflow as tf
 
 
-def get_dataset(batch_size, img_size, input_img_paths, target_img_paths, max_dataset_len=None):
+def augment_data(input_img, target_img):
+    """
+    Perform data augmentation on the input image and its corresponding mask.
+    Augmentations include random flip, brightness adjustments, and rotations.
+    """
+    # Random horizontal flip
+    input_img = tf.image.random_flip_left_right(input_img)
+    target_img = tf.image.random_flip_left_right(target_img)
+
+    # Random brightness adjustment
+    input_img = tf.image.random_brightness(input_img, max_delta=0.1)
+
+    # Random rotation
+    angle = tf.random.uniform([], -15, 15, dtype=tf.float32)
+    input_img = tfa.image.rotate(input_img, angle)
+    target_img = tfa.image.rotate(target_img, angle)
+
+    return input_img, target_img
+
+
+def get_dataset(batch_size, img_size, input_img_paths, target_img_paths, max_dataset_len=None, augment=False):
     """
     Create a TensorFlow dataset for the given input and target image paths.
+    Optionally apply augmentation if augment=True.
     """
+    # Limit the dataset size if max_dataset_len is set
     if max_dataset_len:
         input_img_paths = input_img_paths[:max_dataset_len]
         target_img_paths = target_img_paths[:max_dataset_len]
 
     def load_func(input_img_path, target_img_path):
-        return load_img_and_mask(input_img_path, target_img_path, img_size)
+        # Load images and masks
+        input_img, target_img = load_img_and_mask(
+            input_img_path, target_img_path, img_size)
+        # Apply augmentation if enabled
+        if augment:
+            input_img, target_img = augment_data(input_img, target_img)
+        return input_img, target_img
 
     dataset = tf.data.Dataset.from_tensor_slices(
         (input_img_paths, target_img_paths))
     dataset = dataset.map(lambda x, y: load_func(
         x, y), num_parallel_calls=tf.data.AUTOTUNE)
     dataset = dataset.filter(lambda x, y: x is not None and y is not None)
-    return dataset.batch(batch_size)
+    return dataset.batch(batch_size).shuffle(buffer_size=100)
 
 
 def prepare_paths(input_dir, target_dir):
